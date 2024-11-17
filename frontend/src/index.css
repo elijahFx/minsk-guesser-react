@@ -1,0 +1,28 @@
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+.mapContainer {
+    height: 150px;
+    width: 150px;
+    bottom: 20px;
+    right: 20px;
+    position: absolute;
+}
+
+.overMapContainer {
+    display: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    cursor: pointer
+}
+
+.overMapContainer #map {
+    cursor: pointer
+}
+
+.ymaps-2-1-79-events-pane {
+    cursor: pointer;
+}
