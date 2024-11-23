@@ -1,28 +1,436 @@
 * {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 .mapContainer {
-    height: 150px;
-    width: 150px;
-    bottom: 20px;
-    right: 20px;
-    position: absolute;
+  height: 150px;
+  width: 150px;
+  bottom: 20px;
+  right: 20px;
+  position: absolute;
 }
 
 .overMapContainer {
-    display: relative;
-    min-width: 100vw;
-    min-height: 100vh;
-    cursor: pointer
+  display: relative;
+  min-width: 100vw;
+  min-height: 100vh;
+  cursor: pointer;
 }
 
 .overMapContainer #map {
-    cursor: pointer
+  cursor: pointer;
 }
 
-.ymaps-2-1-79-events-pane {
-    cursor: pointer;
+body {
+  overflow: hidden;
+}
+
+@font-face {
+  font-family: "Bebas";
+  src: url("/geo/geo/yandexGeoguesser/assets/BebasNeue.ttf");
+}
+
+#app {
+  z-index: 3;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #bbb;
+}
+
+.subContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.mapNotTouched {
+  overflow: hidden;
+  z-index: 1;
+  width: 100%; /* 100% */
+  height: 25vh; /* 40vh */
+  background-color: white;
+  border-radius: 7px;
+  transition: 0.3s;
+  opacity: 0.5;
+  position: relative;
+}
+
+.mapTouched {
+  z-index: 1;
+  width: 100%;
+  height: 50vh;
+  background-color: white;
+  border-radius: 7px;
+  transition: 0.3s;
+  opacity: 1;
+}
+
+.container {
+  height: fit-content;
+  width: 30vw;
+  bottom: 1vh;
+  right: 1vw;
+  position: absolute;
+  z-index: 14;
+}
+
+.submitBtn {
+  display: block;
+  letter-spacing: 1px;
+  border-radius: 45px;
+  cursor: pointer;
+  font-size: 2.2vh;
+  font-family: "Roboto";
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 97%;
+  height: 6vh;
+  transition: 0.4s;
+  margin: 1vh auto 0 auto;
+}
+
+.submitBtn:hover {
+  font-size: 2.6vh;
+}
+
+.shadowBox {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  height: fit-content;
+  width: fit-content;
+  padding: 5px 10px;
+  transition: 0.4s;
+}
+
+.shadowBox2 {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  height: fit-content;
+  width: fit-content;
+  padding: 5px 10px;
+  transition: 0.4s;
+  display: block;
+  margin: 0 auto;
+}
+
+.button {
+  outline: none;
+  cursor: pointer;
+  border: none;
+  background-color: white;
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+  font-size: 15px;
+  color: rgb(255, 0, 0);
+}
+
+.one {
+  transform: rotate(225deg);
+  background-position: 2px 6px;
+  background-repeat: no-repeat;
+  background-size: 25px;
+  background-image: url("./assets/arrow.png");
+}
+
+.two {
+  transform: rotate(45deg);
+  background-position: 2px 6px;
+  background-repeat: no-repeat;
+  background-size: 25px;
+  background-image: url("./assets/arrow.png");
+}
+
+.three {
+  background-position: 7px 5px;
+  background-repeat: no-repeat;
+  background-size: 19px;
+  background-image: url("./assets/pin2.png");
+}
+
+.hide {
+  background-position: 50% 50%;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  background-image: url("3linesW.png");
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 97%;
+  height: 6vh;
+  border-radius: 45px;
+  transition: 0.3s;
+  display: block;
+  margin: 0 auto;
+}
+
+.loader-wrapper {
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #242f3f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  position: relative;
+  border: 4px solid #fff;
+  animation: loader 2s infinite ease;
+}
+
+.infoBox {
+  user-select: none;
+  gap: 2vh;
+  font-family: "Roboto";
+  align-content: center;
+  display: grid;
+  align-content: center;
+  grid-template-rows: auto auto;
+  top: 5vh;
+  right: 0;
+  position: absolute;
+  z-index: 15; /* Единственный z-index, который переплёвывает адрес в правом верхнем углу экрана */
+  width: 32vw;
+  height: 14vh;
+  border-bottom: 14vh solid purple;
+  border-left: 0 solid transparent;
+  border-right: 45px solid transparent;
+  border-top: 0 solid transparent;
+  transform: rotate(180deg);
+}
+
+.bottomRow,
+.topRow {
+  font-family: "Roboto";
+  font-size: 2.5vh;
+  z-index: 15;
+  text-align: center;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-content: center;
+  transform: rotate(180deg) translate3d(2vw, -7vh, 0);
+}
+
+h4,
+h3 {
+  width: 7vw;
+}
+
+.bottomRow {
+  color: white;
+}
+
+.topRow {
+  color: #43c54380;
+  color: rgb(163, 163, 163);
+}
+
+.blackScreen1 {
+  gap: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 25;
+  height: 25vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.blackScreen2 {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 25;
+  height: 25vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column-reverse;
+  gap: 5px;
+}
+
+.mapEnd {
+  z-index: 25;
+  width: 100vw;
+  height: 50vh;
+  position: absolute;
+  top: 25vh;
+  right: -100vw;
+}
+
+.containerEnd {
+  height: fit-content;
+  width: fit-content;
+  position: relative;
+}
+
+.notificationContainer {
+  z-index: 0;
+  padding: 20px 20px;
+  gap: 7px;
+  width: 20vw;
+  height: fit-content;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 16;
+  justify-content: flex-start;
+  align-items: center;
+  visibility: none;
+}
+
+.notification {
+  z-index: 26;
+  position: relative;
+  width: 100%;
+  height: 10vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-family: "Roboto", sans-serif;
+  font-size: 15px;
+  border-radius: 30px;
+  padding: 10%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row-reverse;
+  transition: ease-in-out 0.4s;
+  animation: moveDown 0.4s ease-in-out;
+  color: white;
+}
+
+.material-symbols-outlined {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.outlineText {
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #0fa,
+    0 0 82px #0fa, 0 0 92px #0fa, 0 0 102px #0fa, 0 0 151px #0fa;
+}
+
+.notificationContainer .outlineText {
+  animation: flicker 1.5s infinite alternate;
+}
+
+.myProgress {
+  width: 60%;
+  background-color: grey;
+}
+
+.myBar {
+  height: 30px;
+  background-color: #d63930;
+  text-align: center; /* To center it horizontally (if you want) */
+  line-height: 30px; /* To center it vertically */
+  color: white;
+  transition: 0.5s;
+}
+
+.beautyFont {
+  font-size: 25px;
+  font-family: "Roboto";
+  color: white;
+}
+
+.logo {
+  width: 20vw;
+  display: none;
+}
+
+.blackScreen1 span {
+  color: #da2319;
+  font-size: 10vh;
+  transition: 0.4s;
+}
+
+.blackScreen1 span:hover {
+  color: #da4e46;
+}
+
+@keyframes moveDown {
+  0% {
+    transform: translate3d(0, -11vh, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes flicker {
+  0%,
+  18%,
+  22%,
+  25%,
+  53%,
+  57%,
+  100% {
+    text-shadow: 0 0 4px #fff, 0 0 11px #fff, 0 0 19px #fff, 0 0 40px #0fa,
+      0 0 80px #0fa, 0 0 90px #0fa, 0 0 100px #0fa, 0 0 150px #0fa;
+  }
+
+  20%,
+  24%,
+  55% {
+    text-shadow: none;
+  }
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-inner {
+  0% {
+    height: 0%;
+  }
+  25% {
+    height: 0%;
+  }
+  50% {
+    height: 100%;
+  }
+  75% {
+    height: 100%;
+  }
+  100% {
+    height: 0%;
+  }
 }
