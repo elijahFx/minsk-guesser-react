@@ -1,8 +1,16 @@
+@font-face {
+  font-family: "Bebas";
+  src: url("./assets/fonts/BebasNeue.ttf") format("truetype"); /* Adjust path as needed */
+  font-weight: normal;
+  font-style: normal;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
 }
+
 
 .mapContainer {
   height: 150px;
@@ -27,10 +35,7 @@ body {
   overflow: hidden;
 }
 
-@font-face {
-  font-family: "Bebas";
-  src: url("/geo/geo/yandexGeoguesser/assets/BebasNeue.ttf");
-}
+
 
 #app {
   z-index: 3;
@@ -93,6 +98,7 @@ body {
   height: 6vh;
   transition: 0.4s;
   margin: 1vh auto 0 auto;
+  font-weight: 600;
 }
 
 .submitBtn:hover {
@@ -107,6 +113,11 @@ body {
   width: fit-content;
   padding: 5px 10px;
   transition: 0.4s;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px
 }
 
 .shadowBox2 {
@@ -370,6 +381,9 @@ h3 {
 .blackScreen1 span:hover {
   color: #da4e46;
 }
+
+
+
 
 @keyframes moveDown {
   0% {

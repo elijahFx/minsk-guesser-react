@@ -1,15 +1,11 @@
-import React, { useEffect } from 'react';
+import React from "react";
 
-const LoaderComponent = () => {
-  useEffect(() => {
-    const loaderTimeout = setTimeout(() => {
-      document.querySelector('.loader-wrapper').style.zIndex = '2';
-    }, 1000);
-
-    return () => clearTimeout(loaderTimeout);
-  }, []);
-
-  return <div className="loader-wrapper">Loading...</div>;
-};
-
-export default LoaderComponent;
+export default function LoaderComponent() {
+  return (
+    <div className="loader-wrapper">
+      <span className="loader">
+        <span className="loader-inner"></span>
+      </span>
+    </div>
+  );
+}

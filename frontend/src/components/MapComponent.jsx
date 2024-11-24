@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   YMaps,
   Map,
@@ -7,23 +7,33 @@ import {
   Panorama,
 } from "@pbe/react-yandex-maps";
 import pinImg from "../assets/pin.png";
+import SubmitButton from "./SubmitButton";
+import PanoramaComponent from "./PanoramaComponent";
+
+const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 
 const MapComponent = ({ onSubmitGuess }) => {
   const [isPinPlaced, setIsPinPlaced] = useState(false);
   const [currentCoords, setCurrentCoords] = useState(null);
   const [mapClass, setMapClass] = useState("mapNotTouched");
   const [isButtonThreeActive, setIsButtonThreeActive] = useState(false);
+  const [count, setCount] = useState(1);
+  const [placemarks, setPlacemarks] = useState([]);
 
-  const findStopPropagation = (event) => {
-    const entries = Object.entries(event); // Convert the event object to entries
-    for (const [key, value] of entries) {
-      if (key === "stopPropagation" || key === "_stopPropagation") {
-        console.log(`Found a stopPropagation function on key: ${key}`);
-        return value; // Return the function if you need to use it
-      }
-    }
-    console.log("No stopPropagation function found.");
-    return null; // Return null if not found
+  const template = ymaps?.templateLayoutFactory?.createClass(
+    `<div style="position: relative; width: 50px; height: 50px;">
+      <img src=${pinImg} style="width: 100%; height: 100%;" />
+      <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
+        ${count}
+      </div>
+    </div>`
+  );
+
+  const mapRef = useRef(null);
+
+  const handleMapLoad = (ymaps) => {
+    ymaps.originalEvent?.target?.cursors.push("arrow");
+    return false;
   };
 
   const onPlaceGuess = (coords) => {
@@ -40,6 +50,7 @@ const MapComponent = ({ onSubmitGuess }) => {
     if (!isButtonThreeActive) {
       setMapClass("mapTouched");
     }
+    e.originalEvent?.target?.cursors.push("arrow");
   };
 
   const handleMouseLeave = (e) => {
@@ -58,6 +69,7 @@ const MapComponent = ({ onSubmitGuess }) => {
 
   const handleButtonThreeClick = () => {
     setIsButtonThreeActive((prevState) => !prevState);
+
     if (!isButtonThreeActive) {
       setMapClass("mapTouched");
     }
@@ -97,90 +109,60 @@ const MapComponent = ({ onSubmitGuess }) => {
             className="three button"
             onClick={handleButtonThreeClick}
             style={{
-              border: isButtonThreeActive ? "1px solid black" : "none",
+              border: isButtonThreeActive ? "3px solid black" : "none",
+              backgroundPosition: isButtonThreeActive ? "4px 3px" : "7px 5px",
             }}
           ></button>
         </div>
         <YMaps
           query={{
-            apikey: "shmuck",
+            apikey: "b758d8a7-6b04-428a-8075-287f16ed6f8d&lang=ru_RU",
           }}
         >
-          <div
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className="mapCont"
-          >
+          <div className="mapCont" onMouseOut={handleMouseLeave}>
             <Map
-              className={mapClass}
+              onLoad={(e) => handleMapLoad(e)}
+              className={`${mapClass} custom-cursor`}
               defaultState={{ center: [53.908393, 27.558943], zoom: 10 }}
               onClick={handleMapClick}
               onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
+              cursors={"auto"}
               options={{
                 copyrightUaVisible: false,
                 copyrightProvidersVisible: false,
+                yandexMapDisablePoiInteractivity: true,
+                suppressMapOpenBlock: true,
+                copyrightLogoVisible: false,
                 autoFitToViewport: "always",
               }}
             >
               {isPinPlaced && currentCoords && (
                 <Placemark
-                  onMouseEnter={(e) => {
-                    console.log(findStopPropagation(e));
-
-                    e._sourceEvent.stopPropagation();
-                  }}
-                  onMouseLeave={(e) => {
-                    e._sourceEvent.stopPropagation();
-                  }}
                   geometry={currentCoords}
-                  properties={{
-                    hintContent: "Your Guess",
-                  }}
                   options={{
-                    iconLayout: "default#image",
-                    iconImageHref: pinImg,
-                    iconImageSize: [29, 29],
-                    interactivityModel: "default#transparent",
+                    iconLayout: template ? template : ")",
+                    iconOffset: [-26, -43],
                   }}
                 />
               )}
-              <FullscreenControl />
+              <FullscreenControl onMouseMove={handleMouseEnter} />
             </Map>
           </div>
         </YMaps>
 
-        <button
-          className="submitBtn"
-          onClick={() => {
-            if (currentCoords) {
-              onSubmitGuess(currentCoords);
-            } else {
-              alert("Please place a pin before submitting!");
-            }
-          }}
-          disabled={!isPinPlaced}
-        >
-          Поместите булавку на карту
-        </button>
+        <SubmitButton
+          onSubmitGuess={onSubmitGuess}
+          isPinPlaced={isPinPlaced}
+          currentCoords={currentCoords}
+        />
       </div>
       <YMaps
         query={{
-          apikey: "shmuck",
+          apikey: "b758d8a7-6b04-428a-8075-287f16ed6f8d&lang=ru_RU",
         }}
       >
-        <Panorama
-          width="100vw"
-          height="100vh"
-          style={{ zIndex: "20" }}
-          defaultPoint={[53.908393, 27.558943]}
-        ></Panorama>
+        <MemoizedPanoramaComponent />
       </YMaps>
-      <div className="loader-wrapper">
-        <span className="loader">
-          <span className="loader-inner"></span>
-        </span>
-      </div>
     </div>
   );
 };
