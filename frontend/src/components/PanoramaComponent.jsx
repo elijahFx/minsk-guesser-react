@@ -1,16 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Panorama } from "@pbe/react-yandex-maps";
+import { getRandomCoords } from "../utils/getRandomCoords";
 
 export default function PanoramaComponent() {
   const panoramaRef = useRef(null);
 
-  const [sw, setSW] = useState(false);
-
-  function handleClick() {
-    console.log("клик");
-    
-    setSW(!sw)
-  }
+  
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -19,10 +14,15 @@ export default function PanoramaComponent() {
         "#root > div > div:nth-child(4) > ymaps:nth-child(1) > ymaps > ymaps.ymaps-2-1-79-panorama-control__top-right"
       );
 
+      const parentElement2 = document.querySelector(
+        "#root > div > div:nth-child(4) > ymaps:nth-child(1) > ymaps > ymaps.ymaps-2-1-79-panorama-control__copyright"
+      );
+
       // If the parent element is found, remove all its children
-      if (parentElement) {
-        while (parentElement.firstChild) {
+      if (parentElement || parentElement2) {
+        while (parentElement.firstChild && parentElement2.firstChild) {
           parentElement.removeChild(parentElement.firstChild);
+          parentElement2.removeChild(parentElement2.firstChild);
         }
         console.log("All children removed");
       }
@@ -34,17 +34,21 @@ export default function PanoramaComponent() {
 
   useEffect(() => {
     if (panoramaRef.current) {
-      console.log(panoramaRef.current);
+      
       panoramaRef.current.events.add("markerexpand", () => {
+        return null
+      });
+      panoramaRef.current.events.add("markercollapse", () => {
         console.log("Нажали");
       });
+      console.log(panoramaRef.current);
     }
-  }, [sw]);
+  }, [panoramaRef]);
 
   return (
     <Panorama
-      onClick={() => handleClick}
       instanceRef={panoramaRef}
+      
       options={{
         hotkeysEnabled: true,
         suppressMapOpenBlock: true,
@@ -52,7 +56,7 @@ export default function PanoramaComponent() {
       }}
       width="100vw"
       height="100vh"
-      defaultPoint={[53.908393, 27.558943]}
+      defaultPoint={getRandomCoords()}
     ></Panorama>
   );
 }
