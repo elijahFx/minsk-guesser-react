@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   YMaps,
   Map,
   Placemark,
   FullscreenControl,
-  Panorama,
 } from "@pbe/react-yandex-maps";
 import pinImg from "../assets/pin.png";
 import SubmitButton from "./SubmitButton";
 import PanoramaComponent from "./PanoramaComponent";
+import { useDispatch } from "react-redux";
+import { setMapCoords } from "../slices/coordinatesSlice";
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 
@@ -19,6 +20,8 @@ const MapComponent = ({ onSubmitGuess }) => {
   const [isButtonThreeActive, setIsButtonThreeActive] = useState(false);
   const [count, setCount] = useState(1);
   const [placemarks, setPlacemarks] = useState([]);
+
+  const dispatch = useDispatch()
 
   const template = ymaps?.templateLayoutFactory?.createClass(
     `<div style="position: relative; width: 50px; height: 50px;">
@@ -38,6 +41,7 @@ const MapComponent = ({ onSubmitGuess }) => {
 
   const onPlaceGuess = (coords) => {
     setCurrentCoords(coords);
+    dispatch(setMapCoords(coords))
     setIsPinPlaced(true);
   };
 
@@ -156,13 +160,9 @@ const MapComponent = ({ onSubmitGuess }) => {
           currentCoords={currentCoords}
         />
       </div>
-      <YMaps
-        query={{
-          apikey: "b758d8a7-6b04-428a-8075-287f16ed6f8d&lang=ru_RU",
-        }}
-      >
+      
         <MemoizedPanoramaComponent />
-      </YMaps>
+    
     </div>
   );
 };
