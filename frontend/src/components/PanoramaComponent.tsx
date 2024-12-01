@@ -4,7 +4,11 @@ import { getRandomCoords } from "../utils/getRandomCoords";
 import { useDispatch } from "react-redux";
 import { setPanoramaCoords } from "../slices/coordinatesSlice";
 
-const PanoramaComponent: React.FC = () => {
+interface PanoramaComponentProps {
+  coords: number[]; 
+}
+
+const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
   const panoramaRef = useRef<any>(null); // Adjust the type as per the actual type returned by Panorama
   const [randomCoords, setRandomCoords] = useState<number[]>([]);
   const [isPanoramaAvailable, setIsPanoramaAvailable] = useState(false);

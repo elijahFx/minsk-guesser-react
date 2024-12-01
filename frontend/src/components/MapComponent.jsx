@@ -1,27 +1,39 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   YMaps,
   Map,
   Placemark,
   FullscreenControl,
+  Polyline,
 } from "@pbe/react-yandex-maps";
 import pinImg from "../assets/pin.png";
-import SubmitButton from "./SubmitButton";
+import finishImg from "../assets/finish.png";
 import PanoramaComponent from "./PanoramaComponent";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setMapCoords } from "../slices/coordinatesSlice";
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 
-const MapComponent = ({ onSubmitGuess }) => {
+const MapComponent = () => {
   const [isPinPlaced, setIsPinPlaced] = useState(false);
   const [currentCoords, setCurrentCoords] = useState(null);
   const [mapClass, setMapClass] = useState("mapNotTouched");
   const [isButtonThreeActive, setIsButtonThreeActive] = useState(false);
   const [count, setCount] = useState(1);
   const [placemarks, setPlacemarks] = useState([]);
+  const [placeMarkToRender, setPlaceMarkToRender] = useState([]);
+  const [finishes, setFinishes] = useState([]);
+  const [polylines, setPolylines] = useState([]);
+  const [currentPlacemark, setCurrentPlacemark] = useState([]);
 
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+  const panoramaCoords = useSelector(
+    (state) => state.coordinates.panoramaCoordinates
+  );
+  const panoramaCoordsReversed = Array.from(panoramaCoords).reverse();
+
+  const memoizedPlacemarks = useMemo(() => placemarks, [placemarks])
+  const memoizedFinishes = useMemo(() => finishes, [finishes])
 
   const template = ymaps?.templateLayoutFactory?.createClass(
     `<div style="position: relative; width: 50px; height: 50px;">
@@ -32,16 +44,51 @@ const MapComponent = ({ onSubmitGuess }) => {
     </div>`
   );
 
-  const mapRef = useRef(null);
+  const finishTemplate = ymaps?.templateLayoutFactory?.createClass(
+    `<div style="position: relative; width: 50px; height: 50px;">
+      <img src=${finishImg} style="width: 100%; height: 100%;" />
+    </div>`
+  );
 
   const handleMapLoad = (ymaps) => {
     ymaps.originalEvent?.target?.cursors.push("arrow");
     return false;
   };
 
+  console.log(placemarks);
+
+  const handleSubmit = () => {
+    if (currentCoords) {
+      setPlacemarks((prevState) => {
+        return [...prevState, currentPlacemark]
+      })
+      setCurrentPlacemark([])
+      setPolylines((prevState) => {
+        const newPolyline = [panoramaCoordsReversed, currentCoords];
+        return [...prevState, newPolyline];
+      });
+
+      setFinishes((prevState) => {
+        if (!prevState.includes(panoramaCoordsReversed)) {
+          return [...prevState, panoramaCoordsReversed];
+        }
+        return prevState; // Avoid duplicate entries
+      });
+
+      // Reset pin placement and increment round count
+      setIsPinPlaced(false);
+      setCount((prevState) => prevState + 1);
+    } else {
+      console.warn("Current coordinates are not set!");
+    }
+  };
+
   const onPlaceGuess = (coords) => {
     setCurrentCoords(coords);
-    dispatch(setMapCoords(coords))
+    setCurrentPlacemark([{ coords, round: count }]);
+    console.log(currentPlacemark);
+
+    dispatch(setMapCoords(coords));
     setIsPinPlaced(true);
   };
 
@@ -94,7 +141,7 @@ const MapComponent = ({ onSubmitGuess }) => {
         </div>
         <div className="bottomRow">
           <h3 id="city">Минск</h3>
-          <h3 id="roundElement">0 / 5</h3>
+          <h3 id="roundElement">{count} / 5</h3>
           <h3 id="pointsElement">0</h3>
         </div>
       </div>
@@ -123,7 +170,11 @@ const MapComponent = ({ onSubmitGuess }) => {
             apikey: "b758d8a7-6b04-428a-8075-287f16ed6f8d&lang=ru_RU",
           }}
         >
-          <div className="mapCont" onMouseOut={handleMouseLeave}>
+          <div
+            className="mapCont"
+            onMouseMove={handleMouseEnter}
+            onMouseOut={handleMouseLeave}
+          >
             <Map
               onLoad={(e) => handleMapLoad(e)}
               className={`${mapClass} custom-cursor`}
@@ -140,29 +191,90 @@ const MapComponent = ({ onSubmitGuess }) => {
                 autoFitToViewport: "always",
               }}
             >
-              {isPinPlaced && currentCoords && (
-                <Placemark
-                  geometry={currentCoords}
-                  options={{
-                    iconLayout: template ? template : ")",
-                    iconOffset: [-26, -43],
-                  }}
-                />
-              )}
+              {currentPlacemark.length > 0 &&
+                currentPlacemark.map((el, index) => {
+                 return (
+                  <Placemark
+                    geometry={el.coords}
+                    key={index}
+                    options={{
+                      iconLayout: ymaps?.templateLayoutFactory?.createClass(
+                        `<div style="position: relative; width: 50px; height: 50px;">
+                          <img src=${pinImg} style="width: 100%; height: 100%;" />
+                          <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
+                            ${el.round}
+                          </div>
+                        </div>`
+                      ), // Use a proper fallback
+                      iconImageHref: pinImg, // Fallback to an image directly if needed
+                      iconOffset: [-26, -43],
+                    }}
+                  />
+                )})}
+              {memoizedPlacemarks.length > 0 &&
+                memoizedPlacemarks.flat().map((el, index) => (
+                  <Placemark
+                    geometry={el.coords}
+                    key={index}
+                    options={{
+                      iconLayout: ymaps?.templateLayoutFactory?.createClass(
+                        `<div style="position: relative; width: 50px; height: 50px;">
+                          <img src=${pinImg} style="width: 100%; height: 100%;" />
+                          <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
+                            ${el.round}
+                          </div>
+                        </div>`
+                      ), // Use a proper fallback
+                      iconImageHref: pinImg, // Fallback to an image directly if needed
+                      iconOffset: [-26, -43],
+                    }}
+                  />
+                ))}
+              {memoizedFinishes.length > 0 &&
+                memoizedFinishes.map((el, index) => {
+                  return (
+                    <Placemark
+                      geometry={el}
+                      key={index}
+                      options={{
+                        iconLayout: finishTemplate ? finishTemplate : ")",
+                        iconOffset: [-24, -49],
+                      }}
+                    />
+                  );
+                })}
+              {polylines.length > 0 &&
+                polylines.map((el, index) => {
+                  return (
+                    <Polyline
+                      key={index}
+                      geometry={el}
+                      options={{
+                        strokeColor: "#FF0000",
+                        strokeWidth: 4,
+                        strokeOpacity: 0.8,
+                      }}
+                    />
+                  );
+                })}
               <FullscreenControl onMouseMove={handleMouseEnter} />
             </Map>
           </div>
         </YMaps>
 
-        <SubmitButton
-          onSubmitGuess={onSubmitGuess}
-          isPinPlaced={isPinPlaced}
-          currentCoords={currentCoords}
-        />
+        <button
+          onMouseOut={handleMouseLeave}
+          onMouseMove={handleMouseEnter}
+          onClick={handleSubmit}
+          style={isPinPlaced ? { backgroundColor: "rgb(126, 182, 68)" } : {}}
+          className="submitBtn"
+          disabled={!isPinPlaced}
+        >
+          {isPinPlaced ? "УГАДАТЬ" : "ПОМЕСТИТЕ БУЛАВКУ"}
+        </button>
       </div>
-      
-        <MemoizedPanoramaComponent />
-    
+
+      <MemoizedPanoramaComponent coords={0}/>
     </div>
   );
 };
