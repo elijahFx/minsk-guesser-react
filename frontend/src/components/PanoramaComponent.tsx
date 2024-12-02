@@ -13,6 +13,9 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
   const [randomCoords, setRandomCoords] = useState<number[]>([]);
   const [isPanoramaAvailable, setIsPanoramaAvailable] = useState(false);
 
+  console.log(`мы тут - ${coords}`);
+  
+
   const dispatch = useDispatch()
 
   useLayoutEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   YMaps,
   Map,
@@ -11,6 +11,8 @@ import finishImg from "../assets/finish.png";
 import PanoramaComponent from "./PanoramaComponent";
 import { useDispatch, useSelector } from "react-redux";
 import { setMapCoords } from "../slices/coordinatesSlice";
+import { Notification } from "./Notification";
+import { getRandomCoords } from "../utils/getRandomCoords";
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 
@@ -21,28 +23,41 @@ const MapComponent = () => {
   const [isButtonThreeActive, setIsButtonThreeActive] = useState(false);
   const [count, setCount] = useState(1);
   const [placemarks, setPlacemarks] = useState([]);
-  const [placeMarkToRender, setPlaceMarkToRender] = useState([]);
   const [finishes, setFinishes] = useState([]);
   const [polylines, setPolylines] = useState([]);
   const [currentPlacemark, setCurrentPlacemark] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [propsPanoramaCoords, setPropsPanoramaCoords] = useState(getRandomCoords());
+
+  console.log(propsPanoramaCoords);
+  
 
   const dispatch = useDispatch();
+
   const panoramaCoords = useSelector(
     (state) => state.coordinates.panoramaCoordinates
   );
   const panoramaCoordsReversed = Array.from(panoramaCoords).reverse();
 
-  const memoizedPlacemarks = useMemo(() => placemarks, [placemarks])
-  const memoizedFinishes = useMemo(() => finishes, [finishes])
+  const memoizedPlacemarks = useMemo(() => placemarks, [placemarks]);
+  const memoizedFinishes = useMemo(() => finishes, [finishes]);
 
-  const template = ymaps?.templateLayoutFactory?.createClass(
-    `<div style="position: relative; width: 50px; height: 50px;">
-      <img src=${pinImg} style="width: 100%; height: 100%;" />
-      <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
-        ${count}
-      </div>
-    </div>`
-  );
+  const [polylineLengths, setPolylineLengths] = useState([]); // Store lengths of polylines
+
+  console.log(polylineLengths);
+
+  const calculatePolylineLength = (ymaps, pointA, pointB) => {
+    if (ymaps && pointA && pointB) {
+      return ymaps.coordSystem.geo.getDistance(pointA, pointB); // Returns distance in meters
+    }
+    return 0;
+  };
+
+  function onClose(round) {
+    setNotifications((prevState) =>
+      prevState.filter((notification) => notification.round !== round)
+    );
+  }
 
   const finishTemplate = ymaps?.templateLayoutFactory?.createClass(
     `<div style="position: relative; width: 50px; height: 50px;">
@@ -59,30 +74,40 @@ const MapComponent = () => {
 
   const handleSubmit = () => {
     if (currentCoords) {
-      setPlacemarks((prevState) => {
-        return [...prevState, currentPlacemark]
-      })
-      setCurrentPlacemark([])
-      setPolylines((prevState) => {
-        const newPolyline = [panoramaCoordsReversed, currentCoords];
-        return [...prevState, newPolyline];
-      });
+      setPlacemarks((prevState) => [...prevState, currentPlacemark]);
+      setCurrentPlacemark([]);
 
-      setFinishes((prevState) => {
-        if (!prevState.includes(panoramaCoordsReversed)) {
-          return [...prevState, panoramaCoordsReversed];
-        }
-        return prevState; // Avoid duplicate entries
-      });
+      // Добавление новой линии
+      const newPolyline = [panoramaCoordsReversed, currentCoords];
+      const length = calculatePolylineLength(
+        ymaps,
+        panoramaCoordsReversed,
+        currentCoords
+      );
 
-      // Reset pin placement and increment round count
+      setPolylines((prevState) => [...prevState, newPolyline]);
+      setPolylineLengths((prevState) => [
+        ...prevState,
+        { round: count, length: Math.floor(length) },
+      ]);
+      setNotifications((prevState) => [
+        ...prevState,
+        { round: count, length: Math.floor(length) },
+      ]);
+
+      // Уникальные конечные точки
+      setFinishes((prevState) =>
+        prevState.includes(panoramaCoordsReversed)
+          ? prevState
+          : [...prevState, panoramaCoordsReversed]
+      );
+
       setIsPinPlaced(false);
       setCount((prevState) => prevState + 1);
     } else {
       console.warn("Current coordinates are not set!");
     }
   };
-
   const onPlaceGuess = (coords) => {
     setCurrentCoords(coords);
     setCurrentPlacemark([{ coords, round: count }]);
@@ -193,24 +218,25 @@ const MapComponent = () => {
             >
               {currentPlacemark.length > 0 &&
                 currentPlacemark.map((el, index) => {
-                 return (
-                  <Placemark
-                    geometry={el.coords}
-                    key={index}
-                    options={{
-                      iconLayout: ymaps?.templateLayoutFactory?.createClass(
-                        `<div style="position: relative; width: 50px; height: 50px;">
+                  return (
+                    <Placemark
+                      geometry={el.coords}
+                      key={index}
+                      options={{
+                        iconLayout: ymaps?.templateLayoutFactory?.createClass(
+                          `<div style="position: relative; width: 50px; height: 50px;">
                           <img src=${pinImg} style="width: 100%; height: 100%;" />
                           <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
                             ${el.round}
                           </div>
                         </div>`
-                      ), // Use a proper fallback
-                      iconImageHref: pinImg, // Fallback to an image directly if needed
-                      iconOffset: [-26, -43],
-                    }}
-                  />
-                )})}
+                        ), // Use a proper fallback
+                        iconImageHref: pinImg, // Fallback to an image directly if needed
+                        iconOffset: [-26, -43],
+                      }}
+                    />
+                  );
+                })}
               {memoizedPlacemarks.length > 0 &&
                 memoizedPlacemarks.flat().map((el, index) => (
                   <Placemark
@@ -251,7 +277,7 @@ const MapComponent = () => {
                       geometry={el}
                       options={{
                         strokeColor: "#FF0000",
-                        strokeWidth: 4,
+                        strokeWidth: 2,
                         strokeOpacity: 0.8,
                       }}
                     />
@@ -274,7 +300,15 @@ const MapComponent = () => {
         </button>
       </div>
 
-      <MemoizedPanoramaComponent coords={0}/>
+      <MemoizedPanoramaComponent coords={propsPanoramaCoords} />
+      <div className="notificationContainer">
+        {notifications.length > 0 &&
+          notifications.map((el) => {
+            return (
+              <Notification distance={el.length} onClose={() => onClose(el.round)} />
+            );
+          })}
+      </div>
     </div>
   );
 };
