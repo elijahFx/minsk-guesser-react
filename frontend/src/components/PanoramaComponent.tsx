@@ -89,6 +89,7 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
     }, 100);
 
     return () => {
+      //@ts-ignore
       clearInterval(intervalId); // Ensure no type assertions here
     };
   }, []);

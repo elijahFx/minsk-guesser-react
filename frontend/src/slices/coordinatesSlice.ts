@@ -26,9 +26,12 @@ const coordinatesSlice = createSlice({
     setPanoramaCoords(state, action: PayloadAction<number[]>) {
       state.panoramaCoordinates = action.payload;
     },
+    addRound(state) {
+      state.round += 1
+    }
   },
 });
 
-export const { setMapCoords, setPanoramaCoords } = coordinatesSlice.actions;
+export const { setMapCoords, setPanoramaCoords, addRound } = coordinatesSlice.actions;
 
 export default coordinatesSlice.reducer;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   YMaps,
   Map,
@@ -10,13 +10,16 @@ import pinImg from "../assets/pin.png";
 import finishImg from "../assets/finish.png";
 import PanoramaComponent from "./PanoramaComponent";
 import { useDispatch, useSelector } from "react-redux";
-import { setMapCoords } from "../slices/coordinatesSlice";
+import { addRound, setMapCoords } from "../slices/coordinatesSlice";
 import { Notification } from "./Notification";
 import { getRandomCoords } from "../utils/getRandomCoords";
+import LoaderComponent from "./LoaderComponent";
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
+const MAX_ROUNDS = 5;
 
 const MapComponent = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [isPinPlaced, setIsPinPlaced] = useState(false);
   const [currentCoords, setCurrentCoords] = useState(null);
   const [mapClass, setMapClass] = useState("mapNotTouched");
@@ -27,10 +30,15 @@ const MapComponent = () => {
   const [polylines, setPolylines] = useState([]);
   const [currentPlacemark, setCurrentPlacemark] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [propsPanoramaCoords, setPropsPanoramaCoords] = useState(getRandomCoords());
+  const [propsPanoramaCoords, setPropsPanoramaCoords] = useState(
+    getRandomCoords()
+  );
+  const [panoramaKey, setPanoramaKey] = useState(0);
 
-  console.log(propsPanoramaCoords);
-  
+  const mapRef = useRef(null);
+
+  const currentRound = useSelector((state) => state.coordinates.round);
+  console.warn(currentRound);
 
   const dispatch = useDispatch();
 
@@ -73,7 +81,16 @@ const MapComponent = () => {
   console.log(placemarks);
 
   const handleSubmit = () => {
+    if (currentRound > MAX_ROUNDS) {
+      alert("Конец игры");
+      return;
+    }
     if (currentCoords) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1500);
+
       setPlacemarks((prevState) => [...prevState, currentPlacemark]);
       setCurrentPlacemark([]);
 
@@ -84,6 +101,10 @@ const MapComponent = () => {
         panoramaCoordsReversed,
         currentCoords
       );
+
+      if (mapRef.current) {
+        mapRef.current.panTo(panoramaCoordsReversed);
+      }
 
       setPolylines((prevState) => [...prevState, newPolyline]);
       setPolylineLengths((prevState) => [
@@ -104,6 +125,10 @@ const MapComponent = () => {
 
       setIsPinPlaced(false);
       setCount((prevState) => prevState + 1);
+
+      dispatch(addRound());
+
+      setPanoramaKey((prevKey) => prevKey + 1);
     } else {
       console.warn("Current coordinates are not set!");
     }
@@ -151,8 +176,19 @@ const MapComponent = () => {
     }
   };
 
+  useEffect(() => {
+    setIsLoading(true); // Устанавливаем загрузку в true
+    const timer = setTimeout(() => {
+      setIsLoading(false); // Через 2 секунды устанавливаем загрузку в false
+    }, 2000);
+
+    // Очистка таймера при размонтировании компонента
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div>
+      {isLoading && <LoaderComponent />}
       <img
         src="./assets/minsk-logo-220.png"
         className="logo"
@@ -201,6 +237,9 @@ const MapComponent = () => {
             onMouseOut={handleMouseLeave}
           >
             <Map
+              instanceRef={(ref) => {
+                if (ref) mapRef.current = ref;
+              }}
               onLoad={(e) => handleMapLoad(e)}
               className={`${mapClass} custom-cursor`}
               defaultState={{ center: [53.908393, 27.558943], zoom: 10 }}
@@ -232,7 +271,7 @@ const MapComponent = () => {
                         </div>`
                         ), // Use a proper fallback
                         iconImageHref: pinImg, // Fallback to an image directly if needed
-                        iconOffset: [-26, -43],
+                        iconOffset: [-26, -46],
                       }}
                     />
                   );
@@ -252,7 +291,7 @@ const MapComponent = () => {
                         </div>`
                       ), // Use a proper fallback
                       iconImageHref: pinImg, // Fallback to an image directly if needed
-                      iconOffset: [-26, -43],
+                      iconOffset: [-26, -46],
                     }}
                   />
                 ))}
@@ -300,12 +339,19 @@ const MapComponent = () => {
         </button>
       </div>
 
-      <MemoizedPanoramaComponent coords={propsPanoramaCoords} />
+      <MemoizedPanoramaComponent
+        key={panoramaKey}
+        coords={propsPanoramaCoords}
+      />
+
       <div className="notificationContainer">
         {notifications.length > 0 &&
           notifications.map((el) => {
             return (
-              <Notification distance={el.length} onClose={() => onClose(el.round)} />
+              <Notification
+                distance={el.length}
+                onClose={() => onClose(el.round)}
+              />
             );
           })}
       </div>
