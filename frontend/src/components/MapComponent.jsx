@@ -14,11 +14,17 @@ import { addRound, setMapCoords } from "../slices/coordinatesSlice";
 import { Notification } from "./Notification";
 import { getRandomCoords } from "../utils/getRandomCoords";
 import LoaderComponent from "./LoaderComponent";
+import EndGameComponent from "./EndGameComponent";
+import RightHUDComponent from "./RightHUDComponent";
+import { evaluateDistance } from "../utils/evaluateGame";
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 const MAX_ROUNDS = 5;
 
 const MapComponent = () => {
+
+  const endGameClass = `endGame`
+
   const [isLoading, setIsLoading] = useState(true);
   const [isPinPlaced, setIsPinPlaced] = useState(false);
   const [currentCoords, setCurrentCoords] = useState(null);
@@ -34,11 +40,12 @@ const MapComponent = () => {
     getRandomCoords()
   );
   const [panoramaKey, setPanoramaKey] = useState(0);
+  const [isGameEnded, setIsGameEnded] = useState(false);
+  const [grade, setGrade] = useState((0).toFixed(1));
 
   const mapRef = useRef(null);
 
   const currentRound = useSelector((state) => state.coordinates.round);
-  console.warn(currentRound);
 
   const dispatch = useDispatch();
 
@@ -51,8 +58,6 @@ const MapComponent = () => {
   const memoizedFinishes = useMemo(() => finishes, [finishes]);
 
   const [polylineLengths, setPolylineLengths] = useState([]); // Store lengths of polylines
-
-  console.log(polylineLengths);
 
   const calculatePolylineLength = (ymaps, pointA, pointB) => {
     if (ymaps && pointA && pointB) {
@@ -68,7 +73,7 @@ const MapComponent = () => {
   }
 
   const finishTemplate = ymaps?.templateLayoutFactory?.createClass(
-    `<div style="position: relative; width: 50px; height: 50px;">
+    `<div style="position: relative; width: 40px; height: 40px;">
       <img src=${finishImg} style="width: 100%; height: 100%;" />
     </div>`
   );
@@ -78,13 +83,11 @@ const MapComponent = () => {
     return false;
   };
 
-  console.log(placemarks);
-
   const handleSubmit = () => {
-    if (currentRound > MAX_ROUNDS) {
-      alert("Конец игры");
-      return;
+    if (currentRound > MAX_ROUNDS - 1) {
+      setIsGameEnded(true);
     }
+
     if (currentCoords) {
       setIsLoading(true);
       setTimeout(() => {
@@ -109,7 +112,11 @@ const MapComponent = () => {
       setPolylines((prevState) => [...prevState, newPolyline]);
       setPolylineLengths((prevState) => [
         ...prevState,
-        { round: count, length: Math.floor(length) },
+        {
+          round: count,
+          length: Math.floor(length),
+          grade: evaluateDistance(length),
+        },
       ]);
       setNotifications((prevState) => [
         ...prevState,
@@ -136,8 +143,6 @@ const MapComponent = () => {
   const onPlaceGuess = (coords) => {
     setCurrentCoords(coords);
     setCurrentPlacemark([{ coords, round: count }]);
-    console.log(currentPlacemark);
-
     dispatch(setMapCoords(coords));
     setIsPinPlaced(true);
   };
@@ -186,46 +191,50 @@ const MapComponent = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (polylineLengths.length > 0) {
+      // Суммируем все значения grade
+      const sum = polylineLengths.reduce((acc, item) => acc + item.grade, 0);
+      // Вычисляем среднее арифметическое
+      const average = sum / polylineLengths.length;
+      // Округляем до одного знака после запятой и обновляем состояние
+      setGrade(average.toFixed(1));
+    }
+  }, [polylineLengths]);
+
   return (
     <div>
+      {isGameEnded && <EndGameComponent average={grade} />}
       {isLoading && <LoaderComponent />}
-      <img
-        src="./assets/minsk-logo-220.png"
-        className="logo"
-        alt="Minsk Logo"
-      />
-      <div className="infoBox">
-        <div className="topRow">
-          <h4>Карта:</h4>
-          <h4>Раунд:</h4>
-          <h4>Баллы:</h4>
-        </div>
-        <div className="bottomRow">
-          <h3 id="city">Минск</h3>
-          <h3 id="roundElement">{count} / 5</h3>
-          <h3 id="pointsElement">0</h3>
-        </div>
-      </div>
+      {!isGameEnded && (
+        <RightHUDComponent
+          grade={grade}
+          totalRounds={MAX_ROUNDS}
+          count={count}
+        />
+      )}
 
-      <div className="container">
-        <div className="shadowBox">
-          <button
-            className="one button"
-            onClick={handleButtonOneClick}
-          ></button>
-          <button
-            className="two button"
-            onClick={handleButtonTwoClick}
-          ></button>
-          <button
-            className="three button"
-            onClick={handleButtonThreeClick}
-            style={{
-              border: isButtonThreeActive ? "3px solid black" : "none",
-              backgroundPosition: isButtonThreeActive ? "4px 3px" : "7px 5px",
-            }}
-          ></button>
-        </div>
+      <div className={isGameEnded ? `endGameContainer` : `container`}>
+        {!isGameEnded && (
+          <div className="shadowBox">
+            <button
+              className="one button"
+              onClick={handleButtonOneClick}
+            ></button>
+            <button
+              className="two button"
+              onClick={handleButtonTwoClick}
+            ></button>
+            <button
+              className="three button"
+              onClick={handleButtonThreeClick}
+              style={{
+                border: isButtonThreeActive ? "3px solid black" : "none",
+                backgroundPosition: isButtonThreeActive ? "4px 3px" : "7px 5px",
+              }}
+            ></button>
+          </div>
+        )}
         <YMaps
           query={{
             apikey: "b758d8a7-6b04-428a-8075-287f16ed6f8d&lang=ru_RU",
@@ -241,7 +250,7 @@ const MapComponent = () => {
                 if (ref) mapRef.current = ref;
               }}
               onLoad={(e) => handleMapLoad(e)}
-              className={`${mapClass} custom-cursor`}
+              className={`${mapClass} custom-cursor ${isGameEnded && endGameClass}`}
               defaultState={{ center: [53.908393, 27.558943], zoom: 10 }}
               onClick={handleMapClick}
               onMouseEnter={handleMouseEnter}
@@ -263,15 +272,15 @@ const MapComponent = () => {
                       key={index}
                       options={{
                         iconLayout: ymaps?.templateLayoutFactory?.createClass(
-                          `<div style="position: relative; width: 50px; height: 50px;">
+                          `<div style="position: relative; width: 40px; height: 40px;">
                           <img src=${pinImg} style="width: 100%; height: 100%;" />
-                          <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
+                          <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 12px; font-weight: bold;">
                             ${el.round}
                           </div>
                         </div>`
                         ), // Use a proper fallback
                         iconImageHref: pinImg, // Fallback to an image directly if needed
-                        iconOffset: [-26, -46],
+                        iconOffset: [-20, -37],
                       }}
                     />
                   );
@@ -283,15 +292,15 @@ const MapComponent = () => {
                     key={index}
                     options={{
                       iconLayout: ymaps?.templateLayoutFactory?.createClass(
-                        `<div style="position: relative; width: 50px; height: 50px;">
+                        `<div style="position: relative; width: 40px; height: 40px;">
                           <img src=${pinImg} style="width: 100%; height: 100%;" />
-                          <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 14px; font-weight: bold;">
+                          <div style="position: absolute; top: 33%; left: 53%; transform: translate(-50%, -50%); color: black; font-size: 12px; font-weight: bold;">
                             ${el.round}
                           </div>
                         </div>`
                       ), // Use a proper fallback
                       iconImageHref: pinImg, // Fallback to an image directly if needed
-                      iconOffset: [-26, -46],
+                      iconOffset: [-21, -37],
                     }}
                   />
                 ))}
@@ -303,7 +312,7 @@ const MapComponent = () => {
                       key={index}
                       options={{
                         iconLayout: finishTemplate ? finishTemplate : ")",
-                        iconOffset: [-24, -49],
+                        iconOffset: [-19, -38],
                       }}
                     />
                   );
@@ -327,16 +336,18 @@ const MapComponent = () => {
           </div>
         </YMaps>
 
-        <button
-          onMouseOut={handleMouseLeave}
-          onMouseMove={handleMouseEnter}
-          onClick={handleSubmit}
-          style={isPinPlaced ? { backgroundColor: "rgb(126, 182, 68)" } : {}}
-          className="submitBtn"
-          disabled={!isPinPlaced}
-        >
-          {isPinPlaced ? "УГАДАТЬ" : "ПОМЕСТИТЕ БУЛАВКУ"}
-        </button>
+        {!isGameEnded && (
+          <button
+            onMouseOut={handleMouseLeave}
+            onMouseMove={handleMouseEnter}
+            onClick={handleSubmit}
+            style={isPinPlaced ? { backgroundColor: "rgb(126, 182, 68)" } : {}}
+            className="submitBtn"
+            disabled={!isPinPlaced}
+          >
+            {isPinPlaced ? "УГАДАТЬ" : "ПОМЕСТИТЕ БУЛАВКУ"}
+          </button>
+        )}
       </div>
 
       <MemoizedPanoramaComponent
@@ -346,9 +357,10 @@ const MapComponent = () => {
 
       <div className="notificationContainer">
         {notifications.length > 0 &&
-          notifications.map((el) => {
+          notifications.map((el, index) => {
             return (
               <Notification
+                key={index}
                 distance={el.length}
                 onClose={() => onClose(el.round)}
               />

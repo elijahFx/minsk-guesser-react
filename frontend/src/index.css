@@ -370,7 +370,7 @@ h3 {
 
 .logo {
   width: 20vw;
-  display: none;
+  display: block;
 }
 
 .blackScreen1 span {
@@ -383,8 +383,13 @@ h3 {
   color: #da4e46;
 }
 
-
-
+.endGame {
+  position: absolute;
+  top: 25vh;
+  width: 100vw;
+  height: 50vh;
+  opacity: 0.8;
+} 
 
 @keyframes moveDown {
   0% {

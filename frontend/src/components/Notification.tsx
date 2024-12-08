@@ -4,7 +4,7 @@ export function Notification({ distance, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 15000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [onClose]);
 

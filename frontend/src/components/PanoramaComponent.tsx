@@ -12,8 +12,6 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
   const panoramaRef = useRef<any>(null); // Adjust the type as per the actual type returned by Panorama
   const [randomCoords, setRandomCoords] = useState<number[]>([]);
   const [isPanoramaAvailable, setIsPanoramaAvailable] = useState(false);
-
-  console.log(`мы тут - ${coords}`);
   
 
   const dispatch = useDispatch()
@@ -48,14 +46,11 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
 
       ref.events.add("panoramachange", (event: any) => {
         updateCurrentCoords(ref);
-        console.log("next");
       });
 
       ref.events.add("error", (event: any) => {
-        console.log("ГЛЕБ, ПОСМОТРИ СЮДА");
+        console.error("ОШИБКА");
       });
-
-      console.log("Default markerexpand reaction prevented.");
     } else {
       setRandomCoords(getRandomCoords());
     }
@@ -83,8 +78,6 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
             parentElement2.removeChild(parentElement2.firstChild);
           }
         }
-
-        console.log("All children removed");
       }
     }, 100);
 
@@ -105,13 +98,10 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
         if (panoramas && panoramas.length > 0) {
           setRandomCoords(coords);
           setIsPanoramaAvailable(true);
-          console.warn(`Нашли панорамы: ${(panoramas)}`)
         } else {
           setIsPanoramaAvailable(false);
-          console.warn("Не нашли панорамы")
           // Retry with new coordinates
           checkPanoramaAvailability(getRandomCoords());
-         
         }
       } catch (err) {
         console.error("Error checking panorama availability:", err);
