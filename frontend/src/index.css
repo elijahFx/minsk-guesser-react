@@ -11,7 +11,6 @@
   margin: 0;
 }
 
-
 .mapContainer {
   height: 150px;
   width: 150px;
@@ -34,8 +33,6 @@
 body {
   overflow: hidden;
 }
-
-
 
 #app {
   z-index: 3;
@@ -117,7 +114,7 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 5px
+  gap: 5px;
 }
 
 .shadowBox2 {
@@ -389,7 +386,204 @@ h3 {
   width: 100vw;
   height: 50vh;
   opacity: 0.8;
-} 
+}
+
+.main-menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-image: url("./assets/background-minsk.jpg"); /* Replace with your image path */
+  background-size: cover;
+  background-position: center;
+  overflow-y: auto;
+  min-height: fit-content;
+}
+
+.main-menu-logo {
+  width: 250px;
+  height: auto;
+  margin-bottom: 20px;
+  transition: 0.4s;
+}
+
+.main-menu-logo:hover {
+  width: 270px;
+}
+
+.main-menu-button {
+  width: 200px; /* Ensures all buttons are the same size */
+  height: 50px; /* Ensures uniform height */
+  padding: 10px 20px;
+  margin: 10px 0;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 2px solid red; /* Glowing red border */
+  background-color: #990000; /* Reddish background color */
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.main-menu-button:hover {
+  background-color: #cc0000;
+  box-shadow: 0 0 10px 2px red; /* Glowing effect */
+}
+
+.welcome-message {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 18px;
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.game_settings {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Center the container on the page */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f8f9fa; /* Light gray background */
+}
+
+/* Style the form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+/* Form heading */
+.login-form h2 {
+  text-align: center;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+/* Label styles */
+.login-form label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+/* Input field styles */
+.login-form input {
+  margin-bottom: 16px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Button styles */
+.login-form button {
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.login-form button:hover {
+  background-color: #0056b3;
+}
+
+/* Add responsive design for smaller screens */
+@media (max-width: 600px) {
+  .login-form {
+    width: 90%;
+  }
+}
+
+/* Center the container on the page */
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f8f9fa; /* Light gray background */
+}
+
+/* Style the form */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+/* Form heading */
+.signup-form h2 {
+  text-align: center;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+/* Label styles */
+.signup-form label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+/* Input field styles */
+.signup-form input {
+  margin-bottom: 16px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Button styles */
+.signup-form button {
+  padding: 10px;
+  background-color: #28a745; /* Green button */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.signup-form button:hover {
+  background-color: #218838;
+}
+
+.center {
+  margin: 15px auto auto auto;
+}
+
+/* Add responsive design for smaller screens */
+@media (max-width: 600px) {
+  .signup-form {
+    width: 90%;
+  }
+}
+
 
 @keyframes moveDown {
   0% {

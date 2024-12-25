@@ -1,12 +1,26 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MapComponent from "./components/MapComponent";
+import MainMenu from "./components/MainMenu";
+import { useSelector } from "react-redux";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
 
 const App: React.FC = () => {
+  //@ts-ignore
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/*" element={<MapComponent />} />
+        <Route
+          path="/signup"
+          element={isLoggedIn ? <MainMenu /> : <Signup />}
+        />
+        <Route path="/login" element={isLoggedIn ? <MainMenu /> : <Login />} />
+        <Route path="/" element={isLoggedIn ? <MainMenu /> : <Login />} />
+        <Route path="/game" element={<MapComponent />} />
+        <Route path="/*" element={isLoggedIn ? <MainMenu /> : <Login />} />
       </Routes>
     </BrowserRouter>
   );

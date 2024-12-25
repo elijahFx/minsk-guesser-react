@@ -17,6 +17,11 @@ import LoaderComponent from "./LoaderComponent";
 import EndGameComponent from "./EndGameComponent";
 import RightHUDComponent from "./RightHUDComponent";
 import { evaluateDistance } from "../utils/evaluateGame";
+import { io } from "socket.io-client";
+
+
+let socket = io("http://localhost:3001");
+
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 const MAX_ROUNDS = 5;
@@ -94,6 +99,8 @@ const MapComponent = () => {
         setIsLoading(false);
       }, 1500);
 
+     
+
       setPlacemarks((prevState) => [...prevState, currentPlacemark]);
       setCurrentPlacemark([]);
 
@@ -104,6 +111,15 @@ const MapComponent = () => {
         panoramaCoordsReversed,
         currentCoords
       );
+
+      const roundData = {
+        round: count,
+        userCoords: currentCoords,
+        panoramaCoords: panoramaCoordsReversed,
+        length: Math.floor(length),
+      };
+  
+      socket.emit("roundComplete", roundData);
 
       if (mapRef.current) {
         mapRef.current.panTo(panoramaCoordsReversed);

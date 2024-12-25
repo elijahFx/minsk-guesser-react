@@ -1,6 +1,8 @@
 import React from "react";
 
-export default function LoaderComponent() {
+type LoaderComponentProps = {}; // Define props if needed in the future
+
+const LoaderComponent: React.FC<LoaderComponentProps> = () => {
   return (
     <div className="loader-wrapper">
       <span className="loader">
@@ -8,4 +10,6 @@ export default function LoaderComponent() {
       </span>
     </div>
   );
-}
+};
+
+export default LoaderComponent;
