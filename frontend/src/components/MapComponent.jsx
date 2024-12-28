@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
 import {
   YMaps,
   Map,
@@ -10,25 +10,27 @@ import pinImg from "../assets/pin.png";
 import finishImg from "../assets/finish.png";
 import PanoramaComponent from "./PanoramaComponent";
 import { useDispatch, useSelector } from "react-redux";
-import { addRound, setMapCoords } from "../slices/coordinatesSlice";
+import { addRound, setGameEnd, setMapCoords, setCurrentPlayInfo } from "../slices/coordinatesSlice";
 import { Notification } from "./Notification";
 import { getRandomCoords } from "../utils/getRandomCoords";
 import LoaderComponent from "./LoaderComponent";
 import EndGameComponent from "./EndGameComponent";
 import RightHUDComponent from "./RightHUDComponent";
+import UpHUDComponent from "./UpHUDComponent";
 import { evaluateDistance } from "../utils/evaluateGame";
 import { io } from "socket.io-client";
 
-
 let socket = io("http://localhost:3001");
-
 
 const MemoizedPanoramaComponent = React.memo(PanoramaComponent);
 const MAX_ROUNDS = 5;
 
 const MapComponent = () => {
-
-  const endGameClass = `endGame`
+  const endGameClass = `endGame`;
+  const userName = useSelector((state) => state?.auth?.user?.name);
+  const { time, totalRounds } = useSelector(
+    (state) => state?.coordinates?.currentPlayInfo
+  );
 
   const [isLoading, setIsLoading] = useState(true);
   const [isPinPlaced, setIsPinPlaced] = useState(false);
@@ -99,8 +101,6 @@ const MapComponent = () => {
         setIsLoading(false);
       }, 1500);
 
-     
-
       setPlacemarks((prevState) => [...prevState, currentPlacemark]);
       setCurrentPlacemark([]);
 
@@ -118,7 +118,7 @@ const MapComponent = () => {
         panoramaCoords: panoramaCoordsReversed,
         length: Math.floor(length),
       };
-  
+
       socket.emit("roundComplete", roundData);
 
       if (mapRef.current) {
@@ -218,15 +218,26 @@ const MapComponent = () => {
     }
   }, [polylineLengths]);
 
+  useEffect(() => {
+    if (count > totalRounds - 1) {
+      dispatch(setGameEnd());
+    }
+  }, [count]);
+
   return (
     <div>
       {isGameEnded && <EndGameComponent average={grade} />}
       {isLoading && <LoaderComponent />}
       {!isGameEnded && (
-        <RightHUDComponent
+        <UpHUDComponent
+          MAX_ROUNDS={totalRounds ? totalRounds : 0}
+          time={time ? time : 0}
+          map="Минск"
           grade={grade}
-          totalRounds={MAX_ROUNDS}
+          round={count}
           count={count}
+          user1={userName}
+          user2="no"
         />
       )}
 
@@ -266,7 +277,9 @@ const MapComponent = () => {
                 if (ref) mapRef.current = ref;
               }}
               onLoad={(e) => handleMapLoad(e)}
-              className={`${mapClass} custom-cursor ${isGameEnded && endGameClass}`}
+              className={`${mapClass} custom-cursor ${
+                isGameEnded && endGameClass
+              }`}
               defaultState={{ center: [53.908393, 27.558943], zoom: 10 }}
               onClick={handleMapClick}
               onMouseEnter={handleMouseEnter}

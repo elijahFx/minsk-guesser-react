@@ -1,11 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 
+type currentPlayInfo = {
+    time: number | undefined,
+    totalRounds: number | undefined
+}
+
 interface CoordinatesState {
   mapCoordinates: number[]; 
   panoramaCoordinates: number[];
   round: number;
-  grade: number | undefined
+  grade: number | undefined;
+  currentPlayInfo: currentPlayInfo,
+  isGameEnded: boolean
 }
 
 // Define the initial state
@@ -13,7 +20,12 @@ const initialState: CoordinatesState = {
   mapCoordinates: [],
   panoramaCoordinates: [],
   round: 1,
-  grade: undefined
+  grade: undefined,
+  currentPlayInfo: {
+    time: 30,
+    totalRounds: 5
+  },
+  isGameEnded: false
 };
 
 const coordinatesSlice = createSlice({
@@ -28,10 +40,17 @@ const coordinatesSlice = createSlice({
     },
     addRound(state) {
       state.round += 1
+    },
+    setCurrentPlayInfo(state, action: PayloadAction<currentPlayInfo>) {
+      state.currentPlayInfo.time = action.payload.time
+      state.currentPlayInfo.totalRounds = action.payload.totalRounds
+    },
+    setGameEnd(state) {
+      state.isGameEnded = true
     }
   },
 });
 
-export const { setMapCoords, setPanoramaCoords, addRound } = coordinatesSlice.actions;
+export const { setMapCoords, setPanoramaCoords, addRound, setCurrentPlayInfo, setGameEnd } = coordinatesSlice.actions;
 
 export default coordinatesSlice.reducer;

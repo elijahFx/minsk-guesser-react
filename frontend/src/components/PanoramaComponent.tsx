@@ -58,34 +58,33 @@ const PanoramaComponent: React.FC<PanoramaComponentProps> = ({ coords }) => {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      const parentElement = document.querySelector(
-        "#root > div > div:nth-child(4) > ymaps:nth-child(1) > ymaps > ymaps.ymaps-2-1-79-panorama-control__top-right"
-      );
+        const nameElement = document.querySelector(
+            "#root > div > div:nth-child(3) > ymaps:nth-child(1) > ymaps > ymaps.ymaps-2-1-79-panorama-control__top-right > ymaps.ymaps-2-1-79-panorama-control__name"
+        );
 
-      const parentElement2 = document.querySelector(
-        "#root > div > div:nth-child(4) > ymaps:nth-child(1) > ymaps > ymaps.ymaps-2-1-79-panorama-control__copyright"
-      );
+        const copyrightElement = document.querySelector(
+            "#root > div > div:nth-child(3) > ymaps:nth-child(1) > ymaps > ymaps.ymaps-2-1-79-panorama-control__copyright"
+        );
 
-      if (parentElement || parentElement2) {
-        if (parentElement) {
-          while (parentElement.firstChild) {
-            parentElement.removeChild(parentElement.firstChild);
-          }
+        if (nameElement || copyrightElement) {
+            if (nameElement) {
+                while (nameElement.firstChild) {
+                    nameElement.removeChild(nameElement.firstChild);
+                }
+            }
+
+            if (copyrightElement) {
+                while (copyrightElement.firstChild) {
+                    copyrightElement.removeChild(copyrightElement.firstChild);
+                }
+            }
         }
-
-        if (parentElement2) {
-          while (parentElement2.firstChild) {
-            parentElement2.removeChild(parentElement2.firstChild);
-          }
-        }
-      }
     }, 100);
 
     return () => {
-      //@ts-ignore
-      clearInterval(intervalId); // Ensure no type assertions here
+        clearInterval(intervalId);
     };
-  }, []);
+}, []);
 
   useLayoutEffect(() => {
     const checkPanoramaAvailability = async (coords: number[]) => {

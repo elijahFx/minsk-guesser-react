@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { setCurrentPlayInfo } from "../slices/coordinatesSlice";
 
 interface GameSettingsProps {
   gameName: string;
@@ -17,9 +19,33 @@ export default function GameSettings({
   const [selectedTime, setSelectedTime] = useState(30);
   const [selectedRounds, setSelectedRounds] = useState(5);
 
+  const dispatch = useDispatch();
+
   const maps = ["Минск"]; // Добавьте больше карт при необходимости
   const times = [15, 30, 60, 90]; // Варианты времени
-  const rounds = [3, 5, 7, 10, 15, 30]
+  const rounds = [3, 5, 7, 10, 15, 30];
+
+  function handleSelectTime(e) {
+    const newTime = parseInt(e.target.value, 10); // Получаем новое значение
+    setSelectedTime(newTime); // Обновляем локальный state
+    dispatch(
+      setCurrentPlayInfo({
+        time: newTime, // Используем новое значение напрямую
+        totalRounds: selectedRounds,
+      })
+    );
+  }
+
+  function handleSelectRounds(e) {
+    const newRounds = parseInt(e.target.value, 10); // Получаем новое значение
+    setSelectedRounds(newRounds); // Обновляем локальный state
+    dispatch(
+      setCurrentPlayInfo({
+        time: selectedTime,
+        totalRounds: newRounds, // Используем новое значение напрямую
+      })
+    );
+  }
 
   return (
     <div className="game_settings" style={{ fontFamily: "Arial, sans-serif" }}>
@@ -71,7 +97,7 @@ export default function GameSettings({
         <label style={{ display: "block" }}>Выберите время на отгадку:</label>
         <select
           value={selectedTime}
-          onChange={(e) => setSelectedTime(Number(e.target.value))}
+          onChange={(e) => handleSelectTime(e)}
           style={{ padding: "5px", fontSize: "16px", width: "100%" }}
         >
           {times.map((time, index) => (
@@ -87,7 +113,7 @@ export default function GameSettings({
         <label style={{ display: "block" }}>Выберите количество раундов:</label>
         <select
           value={selectedRounds}
-          onChange={(e) => setSelectedRounds(Number(e.target.value))}
+          onChange={(e) => handleSelectRounds(e)}
           style={{ padding: "5px", fontSize: "16px", width: "100%" }}
         >
           {rounds.map((round, index) => (
@@ -107,7 +133,10 @@ export default function GameSettings({
           Выбранное время: <strong>{selectedTime} секунд</strong>
         </p>
         <p>
-          Выбранное количество раундов: <strong>{selectedRounds} раунд{selectedRounds === 3 ? "а" : "ов"}</strong>
+          Выбранное количество раундов:{" "}
+          <strong>
+            {selectedRounds} раунд{selectedRounds === 3 ? "а" : "ов"}
+          </strong>
         </p>
       </div>
     </div>

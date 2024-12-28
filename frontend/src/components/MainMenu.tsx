@@ -7,6 +7,7 @@ import { nanoid } from "nanoid";
 import GameSettings from "./GameSettings";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../slices/authSlice";
+import { setCurrentPlayInfo } from "../slices/coordinatesSlice";
 
 let socket: Socket | null = null;
 
@@ -15,6 +16,8 @@ export default function MainMenu() {
   const userName = useSelector((state) => state.auth.user.name);
   //@ts-ignore
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  //@ts-ignore
+  const { totalRounds, time } = useSelector((state) => state?.coordinates?.currentPlayInfo)
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -30,8 +33,13 @@ export default function MainMenu() {
   const [partyMessage, setPartyMessage] = useState(""); // Message to display
 
   function handleLogout() {
+    if (socket) {
+      socket.disconnect(); // Disconnect from the server
+      socket = null; // Clear the socket reference
+      setIsConnected(false); // Reset the connection state
+    }
     dispatch(logoutUser());
-    navigate("login");
+    navigate("/login");
   }
 
   useEffect(() => {
@@ -64,6 +72,39 @@ export default function MainMenu() {
       }
     };
   }, [socket]);
+  
+  useEffect(() => {
+    if (socket) {
+      // Обработка уведомления о готовности партии
+      socket.on("partyReady", ({ message }) => {
+        console.log(message); // Вывод сообщения в консоль
+        navigate("/game"); // Перенаправление на MapComponent
+      });
+  
+      // Очистка обработчика на размонтирование компонента
+      return () => {
+
+        //@ts-ignore
+        socket.off("partyReady");
+      };
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      // Получение настроек игры
+      socket.on("gameSettings", ({ totalRounds, time }) => {
+        console.log("Game settings received:", { totalRounds, time });
+        dispatch(setCurrentPlayInfo({ totalRounds, time }));
+      });
+  
+      // Очистка обработчика на размонтирование компонента
+      return () => {
+        //@ts-ignore
+        socket.off("gameSettings");
+      };
+    }
+  }, [socket, dispatch]);
 
   const connectToServer = () => {
     if (!socket) {
@@ -80,11 +121,15 @@ export default function MainMenu() {
     setIsJoiningParty(false);
     setGameName("");
     setPartyId(nanoid());
+    
   };
 
   const handleConfirmCreateParty = () => {
     if (socket) {
-      socket.emit("createParty", { gameName, partyId, username });
+      console.log({ gameName, partyId, username, rounds: totalRounds, time: time });
+      
+      socket.emit("createParty", { gameName, partyId, username, rounds: totalRounds, time: time });
+
     }
   };
 
@@ -98,8 +143,11 @@ export default function MainMenu() {
   const handleConfirmJoinParty = () => {
     if (socket && joinPartyId) {
       socket.emit("joinParty", { partyId: joinPartyId, username });
+      navigate("/game")
     }
   };
+
+ 
 
   return (
     <div className="main-menu-container">
