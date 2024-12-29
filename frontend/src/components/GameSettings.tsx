@@ -32,6 +32,7 @@ export default function GameSettings({
       setCurrentPlayInfo({
         time: newTime, // Используем новое значение напрямую
         totalRounds: selectedRounds,
+        opponentsName: undefined
       })
     );
   }
@@ -43,6 +44,7 @@ export default function GameSettings({
       setCurrentPlayInfo({
         time: selectedTime,
         totalRounds: newRounds, // Используем новое значение напрямую
+        opponentsName: undefined
       })
     );
   }

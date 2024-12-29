@@ -2,7 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-const { evaluateDistance } = require("./evaluateGame")
+const { evaluateDistance } = require("./evaluateGame");
 
 const app = express();
 const userRoutes = require("./routes/users");
@@ -26,11 +26,14 @@ const PORT = 3001;
 let players = {}; // Connected players
 let parties = {}; // Active parties
 let scores = {}; // Player scores
-
-
+let gameInfo = {};
 
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
+
+  socket.on("requestGameInfo", () => {
+    socket.emit("gameInfo", gameInfo); // Передача текущего состояния gameInfo
+  });
 
   socket.on("joinGame", (username) => {
     players[socket.id] = username;
@@ -61,7 +64,6 @@ io.on("connection", (socket) => {
       console.log(`Party with ID ${partyId} already exists.`);
     }
   });
-  
 
   socket.on("joinParty", ({ partyId, username }) => {
     const party = parties[partyId];
@@ -75,35 +77,46 @@ io.on("connection", (socket) => {
       }
       party.players.push(username);
       socket.join(partyId);
+
+      console.log(`username: ${username}`);
+      
+
+      gameInfo = {
+        totalRounds: party.rounds,
+        time: party.time,
+        opponentsName: username
+      };
+
       console.log(`${username} joined party: ${partyId}`);
 
-      const connecterId = socket.id;
+      const roundFromFront = parties[partyId].rounds;
+      const timeFromFront = parties[partyId].time;
 
-      const roundFromFront = parties[partyId].rounds
-      const timeFromFront = parties[partyId].time
+      const totalRounds = roundFromFront;
+      const time = timeFromFront;
 
-      const totalRounds = roundFromFront
-      const time = timeFromFront
+      gameInfo = { totalRounds: roundFromFront, time: timeFromFront, opponentsName: username };
 
       console.log(totalRounds, time);
-      
 
       party.totalRounds = roundFromFront;
       party.time = timeFromFront;
 
-     
-      io.to(partyId).emit("gameInfo", { time: timeFromFront, totalRounds: roundFromFront });
+      io.to(partyId).emit("gameInfo", gameInfo);
 
       io.to(partyId).emit("updateParty", {
         message: `Вы присоединились к сессии ${party.name} с ID ${party.id}. Количество игроков: ${party.players.length}.`,
         party,
       });
-  
+
       // Уведомление создателя партии, если второй игрок подключился
       if (party.players.length === 2) {
         const creatorSocketId = Object.keys(players).find(
           (id) => players[id] === party.host
         );
+
+        console.log(players);
+        
 
         if (creatorSocketId) {
           io.to(creatorSocketId).emit("partyReady", {
@@ -111,7 +124,6 @@ io.on("connection", (socket) => {
           });
 
           console.log(Object.keys(players));
-          
         }
         io.to(partyId).emit("gameSettings", { totalRounds, time });
       }
@@ -124,7 +136,7 @@ io.on("connection", (socket) => {
   socket.on("roundComplete", ({ partyId, results }) => {
     const party = parties[partyId];
     console.log(parties);
-    
+
     if (party && party.players.length === 2) {
       const [player1, player2] = party.players;
       const length1 = results[player1];

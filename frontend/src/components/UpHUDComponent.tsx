@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { setCurrentPlayInfo } from "../slices/coordinatesSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
+import { logoutUser } from "../slices/authSlice";
+import { useNavigate } from "react-router";
 
 let socket = io("http://localhost:3001");
 
@@ -10,8 +11,6 @@ interface UpHUDProps {
   round: number;
   time: string;
   grade: number;
-  user1: "yes" | "no";
-  user2: "yes" | "no";
   MAX_ROUNDS: number;
 }
 
@@ -20,13 +19,49 @@ const UpHUD: React.FC<UpHUDProps> = ({
   round,
   time,
   grade,
-  user1,
-  user2,
   MAX_ROUNDS,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
+  const [isHovered, setIsHovered] = useState(true);
+  const [countdown, setCountdown] = useState(10); // Начальное значение таймера
   const dispatch = useDispatch();
+  const navigate = useNavigate()
+
+  function handleL() {
+    console.log("ты проебал");
+    dispatch(logoutUser())
+    navigate("/login")
+  }
+
+  function handleSkipRound() {
+    console.log("ты скипнул раунд");
+    
+  }
+
+  const opponentsName = useSelector(
+    //@ts-ignore
+    (state) => state?.coordinates?.currentPlayInfo?.opponentsName
+  );
+  //@ts-ignore
+  const userName = useSelector((state) => state?.auth?.user?.name);
+
+  useEffect(() => {
+    // Сбрасываем таймер, когда начинается новый раунд
+    setCountdown(+time);
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          alert("Вы не сделали ход за этот раунд. Ваш балл за этот раунд - 0");
+          return 0; // Завершаем таймер
+        }
+        return prev - 1; // Уменьшаем на 1 каждую секунду
+      });
+    }, 1000);
+
+    // Очистка таймера при размонтировании или обновлении
+    return () => clearInterval(timer);
+  }, [round]);
 
   return (
     <div
@@ -34,10 +69,14 @@ const UpHUD: React.FC<UpHUDProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {isHovered && (
+        <button onClick={handleSkipRound} className="skip-button right">Пропустить раунд</button>
+      )}
+      {isHovered && <button onClick={handleL} className="surrender-button right">Сдаться</button>}
+
       <div className="uphud-content">
         {isHovered && (
           <>
-            {" "}
             <div className="uphud-row">
               <h4>Карта:</h4>
               <h3>{map}</h3>
@@ -50,19 +89,26 @@ const UpHUD: React.FC<UpHUDProps> = ({
             </div>
             <div className="uphud-row">
               <h4>Время:</h4>
-              <h3>{time} сек.</h3>
+              <h3>{countdown} сек.</h3>
             </div>
-            <div className="uphud-row">
+            <div className="line-between"></div>
+            <div className="uphud-row point">
               <h4>Балл:</h4>
-              <h3>{grade}</h3>
+              <h3>
+                <span className="yellow-glow">{grade}</span>
+              </h3>
             </div>
             <div className="uphud-row">
               <h4>Вы:</h4>
-              <h3>{user1}</h3>
+              <h3>
+                <span className="blue-glow">{userName}</span>
+              </h3>
             </div>
             <div className="uphud-row">
               <h4>Соперник:</h4>
-              <h3>{user2}</h3>
+              <h3>
+                <span className="red-glow">{opponentsName}</span>
+              </h3>
             </div>
           </>
         )}

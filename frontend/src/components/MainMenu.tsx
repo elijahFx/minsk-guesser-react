@@ -17,7 +17,10 @@ export default function MainMenu() {
   //@ts-ignore
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   //@ts-ignore
-  const { totalRounds, time } = useSelector((state) => state?.coordinates?.currentPlayInfo)
+  const { totalRounds, time } = useSelector(
+    //@ts-ignore
+    (state) => state?.coordinates?.currentPlayInfo
+  );
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -31,6 +34,7 @@ export default function MainMenu() {
   const [isJoiningParty, setIsJoiningParty] = useState(false);
   const [joinPartyId, setJoinPartyId] = useState("");
   const [partyMessage, setPartyMessage] = useState(""); // Message to display
+  const [side, setSide] = useState("");
 
   function handleLogout() {
     if (socket) {
@@ -39,6 +43,7 @@ export default function MainMenu() {
       setIsConnected(false); // Reset the connection state
     }
     dispatch(logoutUser());
+    setSide("");
     navigate("/login");
   }
 
@@ -72,46 +77,47 @@ export default function MainMenu() {
       }
     };
   }, [socket]);
-  
+
   useEffect(() => {
     if (socket) {
+      console.log('пытаемся войти в игру');
+      
       // Обработка уведомления о готовности партии
       socket.on("partyReady", ({ message }) => {
         console.log(message); // Вывод сообщения в консоль
         navigate("/game"); // Перенаправление на MapComponent
       });
-  
+
+      // Запрос gameInfo при подключении
+      socket.emit("requestGameInfo");
+
+      // Получение данных gameInfo
+      socket.on("gameInfo", (info) => {
+        console.log("Received gameInfo:", info);
+        dispatch(
+          setCurrentPlayInfo({
+            totalRounds: info.totalRounds,
+            time: info.time,
+            opponentsName: info.opponentsName,
+          })
+        ); // Сохраняем данные в Redux или локальное состояние
+      });
+
       // Очистка обработчика на размонтирование компонента
       return () => {
-
-        //@ts-ignore
-        socket.off("partyReady");
+        socket?.off("partyReady");
+        socket?.off("gameInfo");
       };
     }
   }, [socket]);
 
-  useEffect(() => {
-    if (socket) {
-      // Получение настроек игры
-      socket.on("gameSettings", ({ totalRounds, time }) => {
-        console.log("Game settings received:", { totalRounds, time });
-        dispatch(setCurrentPlayInfo({ totalRounds, time }));
-      });
-  
-      // Очистка обработчика на размонтирование компонента
-      return () => {
-        //@ts-ignore
-        socket.off("gameSettings");
-      };
-    }
-  }, [socket, dispatch]);
-
   const connectToServer = () => {
     if (!socket) {
       socket = io("http://localhost:3001");
-      socket.emit("joinGame", username);
+      socket.emit("joinGame", userName);
       setIsConnected(true);
       console.log("Connected to server");
+      socket.emit("gameInfo", { totalRounds, time });
     }
   };
 
@@ -121,19 +127,31 @@ export default function MainMenu() {
     setIsJoiningParty(false);
     setGameName("");
     setPartyId(nanoid());
-    
   };
 
   const handleConfirmCreateParty = () => {
+    setSide("Администратор");
     if (socket) {
-      console.log({ gameName, partyId, username, rounds: totalRounds, time: time });
-      
-      socket.emit("createParty", { gameName, partyId, username, rounds: totalRounds, time: time });
+      console.log({
+        gameName,
+        partyId,
+        username,
+        rounds: totalRounds,
+        time: time,
+      });
 
+      socket.emit("createParty", {
+        gameName,
+        partyId,
+        username: userName,
+        rounds: totalRounds,
+        time: time,
+      });
     }
   };
 
   const handleJoinParty = () => {
+    setSide("Получатель");
     connectToServer();
     setIsJoiningParty(true);
     setIsCreatingParty(false);
@@ -142,12 +160,10 @@ export default function MainMenu() {
 
   const handleConfirmJoinParty = () => {
     if (socket && joinPartyId) {
-      socket.emit("joinParty", { partyId: joinPartyId, username });
-      navigate("/game")
+      socket.emit("joinParty", { partyId: joinPartyId, username: userName });
+      navigate("/game");
     }
   };
-
- 
 
   return (
     <div className="main-menu-container">

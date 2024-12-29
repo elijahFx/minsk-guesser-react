@@ -589,7 +589,7 @@ h3 {
   transition: height 0.3s ease, opacity 0.3s ease;
   overflow: hidden;
   border-radius: 0 0 10px 10px;
-  z-index: 100; 
+  z-index: 100;
 }
 
 .uphud-container.collapsed {
@@ -618,13 +618,95 @@ h3 {
 
 .uphud-row {
   height: 100%;
-  text-emphasis: center;
+  text-align: center;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
   align-items: center;
   margin: 5px 0;
 }
+
+span.red-glow {
+  color: #ff4d4d;
+  text-shadow: 0 0 5px rgba(255, 77, 77, 0.8), 0 0 10px rgba(255, 77, 77, 0.6), 0 0 15px rgba(255, 77, 77, 0.4);
+  font-weight: bold;
+}
+
+span.blue-glow {
+  color: #4d88ff;
+  text-shadow: 0 0 5px rgba(77, 136, 255, 0.8), 0 0 10px rgba(77, 136, 255, 0.6), 0 0 15px rgba(77, 136, 255, 0.4);
+  font-weight: bold;
+}
+
+span.yellow-glow {
+  color: #ffcc00;
+  text-shadow: 0 0 5px rgba(255, 204, 0, 0.8), 0 0 10px rgba(255, 204, 0, 0.6), 0 0 15px rgba(255, 204, 0, 0.4);
+  font-weight: bold;
+}
+
+.line-between {
+  height: 11vh; /* Make the line span the full height of the container */
+  width: 2px; /* Controls the width of the line */
+  background: white;
+  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.7); /* Glowing effect */
+  align-self: center; /* Centers the line */
+}
+
+/* Стили для кнопок */
+.surrender-button {
+  position: absolute;
+  top: 15%;
+  transform: translateY(-50%);
+  background-color: red;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 200;
+  transition: background-color 0.3s ease;
+}
+
+.skip-button {
+  position: absolute;
+  top: 45%;
+  transform: translateY(-50%);
+  background-color: rgb(240, 206, 56);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 200;
+  transition: background-color 0.3s ease;
+}
+
+.skip-button:hover {
+  background-color: rgb(134, 115, 31);;
+}
+
+
+
+.surrender-button:hover {
+  background-color: darkred;
+}
+
+/* Кнопка слева */
+.surrender-button.left {
+  left: 10px;
+}
+
+/* Кнопка справа */
+.surrender-button.right, .skip-button.right {
+  right: 10px;
+}
+
+
+
 
 
 /* Add responsive design for smaller screens */

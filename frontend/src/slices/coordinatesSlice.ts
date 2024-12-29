@@ -3,7 +3,8 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type currentPlayInfo = {
     time: number | undefined,
-    totalRounds: number | undefined
+    totalRounds: number | undefined,
+    opponentsName: string | undefined
 }
 
 interface CoordinatesState {
@@ -23,7 +24,8 @@ const initialState: CoordinatesState = {
   grade: undefined,
   currentPlayInfo: {
     time: 30,
-    totalRounds: 5
+    totalRounds: 5,
+    opponentsName: undefined
   },
   isGameEnded: false
 };
@@ -44,6 +46,7 @@ const coordinatesSlice = createSlice({
     setCurrentPlayInfo(state, action: PayloadAction<currentPlayInfo>) {
       state.currentPlayInfo.time = action.payload.time
       state.currentPlayInfo.totalRounds = action.payload.totalRounds
+      state.currentPlayInfo.opponentsName = action.payload.opponentsName
     },
     setGameEnd(state) {
       state.isGameEnded = true
