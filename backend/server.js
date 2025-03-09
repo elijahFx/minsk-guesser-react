@@ -6,10 +6,12 @@ const { evaluateDistance } = require("./evaluateGame");
 
 const app = express();
 const userRoutes = require("./routes/users");
+const partiesRoutes = require("./routes/parties");
 
 app.use(cors());
 app.use(express.json());
 app.use("/users", userRoutes);
+app.use("/parties", partiesRoutes);
 
 const server = http.createServer(app);
 
@@ -79,12 +81,11 @@ io.on("connection", (socket) => {
       socket.join(partyId);
 
       console.log(`username: ${username}`);
-      
 
       gameInfo = {
         totalRounds: party.rounds,
         time: party.time,
-        opponentsName: username
+        opponentsName: username,
       };
 
       console.log(`${username} joined party: ${partyId}`);
@@ -95,7 +96,11 @@ io.on("connection", (socket) => {
       const totalRounds = roundFromFront;
       const time = timeFromFront;
 
-      gameInfo = { totalRounds: roundFromFront, time: timeFromFront, opponentsName: username };
+      gameInfo = {
+        totalRounds: roundFromFront,
+        time: timeFromFront,
+        opponentsName: username,
+      };
 
       console.log(totalRounds, time);
 
@@ -116,7 +121,6 @@ io.on("connection", (socket) => {
         );
 
         console.log(players);
-        
 
         if (creatorSocketId) {
           io.to(creatorSocketId).emit("partyReady", {
@@ -133,37 +137,66 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("roundComplete", ({ partyId, results }) => {
+  socket.on("roundComplete", ({ partyId, playerName, result }) => {
     const party = parties[partyId];
-    console.log(parties);
+    console.log(
+      `пати: ${party}, партиId: ${partyId}, плеерНейм: ${playerName}`
+    );
 
     if (party && party.players.length === 2) {
-      const [player1, player2] = party.players;
-      const length1 = results[player1];
-      const length2 = results[player2];
-
-      const score1 = evaluateDistance(length1);
-      const score2 = evaluateDistance(length2);
-
-      if (length1 < length2) {
-        scores[player1].wins += 1;
-        scores[player2].losses += 1;
-      } else if (length2 < length1) {
-        scores[player2].wins += 1;
-        scores[player1].losses += 1;
+      // Инициализируем ходы для текущей партии, если их еще нет
+      if (!roundMoves[partyId]) {
+        roundMoves[partyId] = {};
       }
 
-      scores[player1].totalScore += score1;
-      scores[player2].totalScore += score2;
-      scores[player1].rounds += 1;
-      scores[player2].rounds += 1;
+      // Сохраняем результат хода игрока
+      roundMoves[partyId][playerName] = result;
 
-      io.to(partyId).emit("roundResults", {
-        results: {
-          [player1]: { length: length1, score: score1, stats: scores[player1] },
-          [player2]: { length: length2, score: score2, stats: scores[player2] },
-        },
-      });
+      // Проверяем, завершили ли оба игрока свои ходы
+      if (Object.keys(roundMoves[partyId]).length === 2) {
+        const [player1, player2] = party.players;
+
+        // Извлекаем результаты обоих игроков
+        const length1 = roundMoves[partyId][player1];
+        const length2 = roundMoves[partyId][player2];
+
+        const score1 = evaluateDistance(length1);
+        const score2 = evaluateDistance(length2);
+
+        // Определяем победителя раунда
+        if (length1 < length2) {
+          scores[player1].wins += 1;
+          scores[player2].losses += 1;
+        } else if (length2 < length1) {
+          scores[player2].wins += 1;
+          scores[player1].losses += 1;
+        }
+
+        // Обновляем общие счета
+        scores[player1].totalScore += score1;
+        scores[player2].totalScore += score2;
+        scores[player1].rounds += 1;
+        scores[player2].rounds += 1;
+
+        // Отправляем результаты раунда обоим игрокам
+        io.to(partyId).emit("roundResults", {
+          results: {
+            [player1]: {
+              length: length1,
+              score: score1,
+              stats: scores[player1],
+            },
+            [player2]: {
+              length: length2,
+              score: score2,
+              stats: scores[player2],
+            },
+          },
+        });
+
+        // Очищаем данные о ходах для следующего раунда
+        delete roundMoves[partyId];
+      }
     } else {
       console.log(`Invalid party or insufficient players in party ${partyId}`);
     }

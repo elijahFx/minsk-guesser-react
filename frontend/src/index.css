@@ -669,6 +669,28 @@ span.yellow-glow {
   transition: background-color 0.3s ease;
 }
 
+.multiplayer-options {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.create-party-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.join-party-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
 .skip-button {
   position: absolute;
   top: 45%;

@@ -34,7 +34,7 @@ export default function Signup() {
         id: nanoid(),
         date: new Date().getDate(),
       }).unwrap();
-
+      //@ts-ignore
       dispatch(signupUser(result));
     } catch (error) {
       console.error(error);

@@ -21,7 +21,7 @@ const UpHUD: React.FC<UpHUDProps> = ({
   grade,
   MAX_ROUNDS,
 }) => {
-  const [isHovered, setIsHovered] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   const [countdown, setCountdown] = useState(10); // Начальное значение таймера
   const dispatch = useDispatch();
   const navigate = useNavigate()

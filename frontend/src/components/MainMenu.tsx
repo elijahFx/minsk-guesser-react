@@ -7,7 +7,11 @@ import { nanoid } from "nanoid";
 import GameSettings from "./GameSettings";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../slices/authSlice";
-import { setCurrentPlayInfo } from "../slices/coordinatesSlice";
+import {
+  setCurrentPlayInfo,
+  setPartyIdInRedux,
+} from "../slices/coordinatesSlice";
+import { useCreatePartyMutation } from "../apis/partyApi";
 
 let socket: Socket | null = null;
 
@@ -24,6 +28,9 @@ export default function MainMenu() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [createParty, { isLoading, isError, isSuccess }] =
+    useCreatePartyMutation();
 
   const username = "Username"; // Replace with dynamic username logic
   const [isConnected, setIsConnected] = useState(false);
@@ -80,8 +87,8 @@ export default function MainMenu() {
 
   useEffect(() => {
     if (socket) {
-      console.log('пытаемся войти в игру');
-      
+      console.log("пытаемся войти в игру");
+
       // Обработка уведомления о готовности партии
       socket.on("partyReady", ({ message }) => {
         console.log(message); // Вывод сообщения в консоль
@@ -111,6 +118,10 @@ export default function MainMenu() {
     }
   }, [socket]);
 
+  useEffect(() => {
+    dispatch(setPartyIdInRedux(partyId));
+  }, [partyId]);
+
   const connectToServer = () => {
     if (!socket) {
       socket = io("http://localhost:3001");
@@ -129,7 +140,7 @@ export default function MainMenu() {
     setPartyId(nanoid());
   };
 
-  const handleConfirmCreateParty = () => {
+  const handleConfirmCreateParty = async () => {
     setSide("Администратор");
     if (socket) {
       console.log({
@@ -139,6 +150,23 @@ export default function MainMenu() {
         rounds: totalRounds,
         time: time,
       });
+
+      const newParty = {
+        name: gameName,
+        id: partyId,
+        host: username,
+        rounds: totalRounds || 5,
+        time: time || 30,
+        map: "Минск"
+      };
+
+      try {
+        // Выполняем мутацию
+        await createParty(newParty).unwrap();
+        console.log("Party created successfully!");
+      } catch (error) {
+        console.error("Failed to create party:", error);
+      }
 
       socket.emit("createParty", {
         gameName,
@@ -181,12 +209,7 @@ export default function MainMenu() {
           Мультиплеер
         </button>
       ) : (
-        <button
-          className="main-menu-button"
-          onClick={() => setIsConnected(false)}
-        >
-          Выйти
-        </button>
+        <></>
       )}
       {isMultiplayerMenuOpen && !isConnected && (
         <div className="multiplayer-options">

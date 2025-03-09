@@ -22,11 +22,13 @@ export default function GameSettings({
   const dispatch = useDispatch();
 
   const maps = ["Минск"]; // Добавьте больше карт при необходимости
-  const times = [15, 30, 60, 90]; // Варианты времени
+  const times = [15, 30, 60, 90, 1000]; // Варианты времени
   const rounds = [3, 5, 7, 10, 15, 30];
 
   function handleSelectTime(e) {
     const newTime = parseInt(e.target.value, 10); // Получаем новое значение
+    console.log(newTime);
+    
     setSelectedTime(newTime); // Обновляем локальный state
     dispatch(
       setCurrentPlayInfo({

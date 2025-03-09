@@ -22,7 +22,13 @@ export default function Login() {
         password,
       }).unwrap();
 
-      dispatch(loginUser(result));
+      if(result) {
+        console.log(result);
+        
+        dispatch(loginUser(result));
+      }
+
+      
     } catch (error) {
       console.error(error);
     }

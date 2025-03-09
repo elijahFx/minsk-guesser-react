@@ -1,4 +1,9 @@
-import React, { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import {
   YMaps,
   Map,
@@ -10,15 +15,19 @@ import pinImg from "../assets/pin.png";
 import finishImg from "../assets/finish.png";
 import PanoramaComponent from "./PanoramaComponent";
 import { useDispatch, useSelector } from "react-redux";
-import { addRound, setGameEnd, setMapCoords, setCurrentPlayInfo } from "../slices/coordinatesSlice";
+import {
+  addRound,
+  setGameEnd,
+  setMapCoords,
+} from "../slices/coordinatesSlice";
 import { Notification } from "./Notification";
 import { getRandomCoords } from "../utils/getRandomCoords";
 import LoaderComponent from "./LoaderComponent";
 import EndGameComponent from "./EndGameComponent";
-import RightHUDComponent from "./RightHUDComponent";
 import UpHUDComponent from "./UpHUDComponent";
 import { evaluateDistance } from "../utils/evaluateGame";
 import { io } from "socket.io-client";
+import RoundResults from "./RoundResults";
 
 let socket = io("http://localhost:3001");
 
@@ -31,6 +40,7 @@ const MapComponent = () => {
   const { time, totalRounds } = useSelector(
     (state) => state?.coordinates?.currentPlayInfo
   );
+  const partyIdFromRedux = useSelector((state) => state.coordinates.partyId)
 
   const [isLoading, setIsLoading] = useState(true);
   const [isPinPlaced, setIsPinPlaced] = useState(false);
@@ -117,6 +127,8 @@ const MapComponent = () => {
         userCoords: currentCoords,
         panoramaCoords: panoramaCoordsReversed,
         length: Math.floor(length),
+        playerName: userName,
+        partyId: partyIdFromRedux
       };
 
       socket.emit("roundComplete", roundData);
@@ -236,8 +248,6 @@ const MapComponent = () => {
           grade={grade}
           round={count}
           count={count}
-          user1={userName}
-          user2="no"
         />
       )}
 
@@ -395,6 +405,8 @@ const MapComponent = () => {
               />
             );
           })}
+
+          {!isLoading && <RoundResults />}
       </div>
     </div>
   );
